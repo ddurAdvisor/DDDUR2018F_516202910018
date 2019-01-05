@@ -1,0 +1,144 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">	
+    <script src="https://img.hcharts.cn/jquery/jquery-1.8.3.min.js"></script>
+	<script src="https://img.hcharts.cn/highcharts/highcharts.js"></script>
+	<script src="https://img.hcharts.cn/highcharts/modules/exporting.js"></script>
+	<script src="https://img.hcharts.cn/highcharts/modules/data.js"></script>
+	<script src="https://img.hcharts.cn/highcharts/modules/drilldown.js"></script>
+</head>
+<body>
+
+	<div id="container" style="min-width: 310px; max-width: 600px; height: 400px; margin: 0 auto"></div>
+
+<pre id="tsv" style="display:none">食堂 地点	比例
+第二餐饮大楼 100029	26.61%
+第二餐饮大楼 100027	16.96%
+第一餐饮大楼 100001	8.01%
+第一餐饮大楼 100003	7.73%
+第四餐饮大楼 100028	6.72%
+第二餐饮大楼 100036	6.40%
+第四餐饮大楼 100045	4.72%
+第二餐饮大楼 100021	3.55%
+第三餐饮大楼 100019	3.53%
+第四餐饮大楼 100055	2.16%
+第四餐饮大楼 100122	1.87%
+第五餐饮大楼 100456	1.30%
+第一餐饮大楼 100125	1.13%
+第四餐饮大楼 100031	0.90%
+第三餐饮大楼 100022	0.85%
+第四餐饮大楼 100066	0.65%
+第四餐饮大楼 100089	0.55%
+第四餐饮大楼 100054	0.50%
+第一餐饮大楼 100010	0.45%
+第四餐饮大楼 100067	0.36%
+第四餐饮大楼 100066	0.36%
+第四餐饮大楼 100155	0.32%
+第四餐饮大楼 100166	0.31%
+第四餐饮大楼 100163	0.29%
+第六餐饮大楼	0.29%
+第一餐饮大楼 100007 	0.26%
+第一餐饮大楼 100011	0.25%
+第一餐饮大楼 100202	0.24%
+第一餐饮大楼 100204	0.18%
+第一餐饮大楼 100221	0.16%
+第五餐饮大楼 100145	0.15%
+第三餐饮大楼 100032	0.14%
+第一餐饮大楼 100078	0.13%
+第三餐饮大楼 100071	0.12%
+第一餐饮大楼 100112	0.10%
+第四餐饮大楼 100064	0.10%
+第四餐饮大楼 100187	0.09%
+第一餐饮大楼 100002	0.09%
+第五餐饮大楼 100217	0.09%
+第二餐饮大楼  100317  0.09%</pre>
+	<script>
+	Highcharts.data({
+	csv: document.getElementById('tsv').innerHTML,
+	itemDelimiter: '\t',
+	parsed: function (columns) {
+		var brands = {},
+			brandsData = [],
+			versions = {},
+			drilldownSeries = [];
+		columns[1] = Highcharts.map(columns[1], function (value) {
+			if (value.indexOf('%') === value.length - 1) {
+				value = parseFloat(value);
+			}
+			return value;
+		});
+		$.each(columns[0], function (i, name) {
+			var brand,
+				version;
+			if (i > 0) {
+				name = name.split(' -')[0];
+				version = name.match(/([0-9]+[\.0-9x]*)/);
+				if (version) {
+					version = version[0];
+				}
+				brand = name.replace(version, '');
+				if (!brands[brand]) {
+					brands[brand] = columns[1][i];
+				} else {
+					brands[brand] += columns[1][i];
+				}
+				if (version !== null) {
+					if (!versions[brand]) {
+						versions[brand] = [];
+					}
+					versions[brand].push(['v' + version, columns[1][i]]);
+				}
+			}
+		});
+		$.each(brands, function (name, y) {
+			brandsData.push({
+				name: name,
+				y: y,
+				drilldown: versions[name] ? name : null
+			});
+		});
+		$.each(versions, function (key, value) {
+			drilldownSeries.push({
+				name: key,
+				id: key,
+				data: value
+			});
+		});
+		var chart = Highcharts.chart('container',{
+			chart: {
+				type: 'pie'
+			},
+			title: {
+				text: '上海交通大学闵行校区食堂营业额占比分析'
+			},
+			subtitle: {
+				text: '单击每个食堂查看具体信息.'
+			},
+			plotOptions: {
+				series: {
+					dataLabels: {
+						enabled: true,
+						format: '{point.name}: {point.y:.1f}%'
+					}
+				}
+			},
+			tooltip: {
+				headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
+				pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y:.2f}%</b> of total<br/>'
+			},
+			series: [{
+				name: '食堂',
+				colorByPoint: true,
+				data: brandsData
+			}],
+			drilldown: {
+				series: drilldownSeries
+			}
+		});
+	}
+});</script>
+</body>
+</html>
